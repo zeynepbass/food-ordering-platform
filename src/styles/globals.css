@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-gray-800;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-block rounded-full border border-transparent bg-primary px-10 py-2 text-white transition-all duration-300 hover:border-primary hover:bg-transparent hover:text-primary disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+#nprogress .bar {
+  background: theme("colors.primary");
+}
