@@ -1,4 +1,4 @@
-# 🍕 Feane – Yemek Sipariş Uygulaması
+# Food Ordering – Yemek Sipariş Uygulaması
 
 Next.js, MongoDB ve Redux Toolkit ile geliştirilmiş, uçtan uca bir yemek sipariş platformu. Müşteriler kayıt olup ürünleri sepete ekleyerek sipariş verebilir ve siparişlerini canlı takip edebilir; yönetici ise ürün, kategori, sipariş, rezervasyon ve site alt bilgisini admin panelinden yönetir.
 
