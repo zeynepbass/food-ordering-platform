@@ -1,63 +1,72 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/router";
-import PacmanLoader from "react-spinners/PacmanLoader";
+import Link from "next/link";
+import { FiSearch } from "react-icons/fi";
+import DataState from "@/components/common/DataState";
 import Modal from "@/components/common/Modal";
 import Input from "@/components/form/Input";
 import useFetch from "@/hooks/useFetch";
 import productService from "@/services/productService";
+import { formatPrice } from "@/utils/format";
 
 const MAX_RESULTS = 5;
 
 const SearchModal = ({ onClose }) => {
-  const router = useRouter();
   const [query, setQuery] = useState("");
-  const { data: products, loading } = useFetch(productService.getAll, []);
+  const { data: products, loading, error, refetch } = useFetch(productService.getAll, []);
 
-  const results = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    return products
-      .filter((product) => product.title.toLowerCase().includes(term))
-      .slice(0, MAX_RESULTS);
-  }, [products, query]);
-
-  const openProduct = (id) => {
-    router.push(`/product/${id}`);
-    onClose();
-  };
+  const term = query.trim().toLowerCase();
+  const results = products
+    .filter((product) => product.title.toLowerCase().includes(term))
+    .slice(0, MAX_RESULTS);
 
   return (
-    <Modal title="Search" onClose={onClose}>
+    <Modal title="Search the menu" onClose={onClose}>
       <Input
-        placeholder="Search..."
+        type="search"
+        aria-label="Search products"
+        placeholder="Pizza, burger, drinks..."
+        autoFocus
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
-      {loading ? (
-        <div className="flex justify-center items-center mt-3">
-          <PacmanLoader color="#fca311" />
-        </div>
-      ) : (
-        <ul className="mt-4 text-black">
-          {results.length > 0 ? (
-            results.map((product) => (
+      <div className="mt-4 min-h-[12rem]" aria-live="polite">
+        <DataState
+          loading={loading}
+          error={error}
+          onRetry={refetch}
+          isEmpty={results.length === 0}
+          empty={{
+            icon: FiSearch,
+            title: "No results found",
+            text: term ? `Nothing on the menu matches "${query.trim()}".` : "The menu is empty.",
+          }}
+        >
+          <ul className="divide-y divide-line">
+            {results.map((product) => (
               <li key={product._id}>
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between p-1 px-2 hover:bg-primary transition-all"
-                  onClick={() => openProduct(product._id)}
+                <Link
+                  href={`/product/${product._id}`}
+                  className="flex items-center gap-4 rounded-xl px-2 py-3 transition-colors hover:bg-primary-50"
+                  onClick={onClose}
                 >
-                  <Image src={product.img} alt={product.title} width={48} height={48} />
-                  <span className="font-bold">{product.title}</span>
-                  <span className="font-bold">${product.prices[0]}</span>
-                </button>
+                  <Image
+                    src={product.img}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 object-contain"
+                  />
+                  <span className="flex-1 font-semibold text-secondary">{product.title}</span>
+                  <span className="text-sm font-semibold text-secondary">
+                    {formatPrice(product.prices[0])}
+                  </span>
+                </Link>
               </li>
-            ))
-          ) : (
-            <li className="text-center font-semibold">No results found!</li>
-          )}
-        </ul>
-      )}
+            ))}
+          </ul>
+        </DataState>
+      </div>
     </Modal>
   );
 };

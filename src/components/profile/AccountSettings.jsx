@@ -1,6 +1,5 @@
 import { useFormik } from "formik";
 import { toast } from "react-toastify";
-import Title from "@/components/common/Title";
 import FormFields from "@/components/form/FormFields";
 import { profileFields } from "@/constants/formFields";
 import { profileSchema } from "@/schemas/profileSchema";
@@ -28,13 +27,14 @@ const AccountSettings = ({ user }) => {
   });
 
   return (
-    <form className="lg:p-8 flex-1 lg:mt-0 mt-5" onSubmit={formik.handleSubmit}>
-      <Title addClass="text-[40px]">Account Settings</Title>
-      <div className="grid lg:grid-cols-2 grid-cols-1 gap-4 mt-4">
+    <form onSubmit={formik.handleSubmit} noValidate>
+      <h1 className="section-title">Account settings</h1>
+      <p className="mt-1 text-sm text-muted">Your delivery address is used for new orders.</p>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
         <FormFields fields={profileFields} formik={formik} />
       </div>
-      <button className="btn-primary mt-4" type="submit" disabled={formik.isSubmitting}>
-        Update
+      <button className="btn btn-primary mt-6" type="submit" disabled={formik.isSubmitting}>
+        {formik.isSubmitting ? "Saving..." : "Save changes"}
       </button>
     </form>
   );

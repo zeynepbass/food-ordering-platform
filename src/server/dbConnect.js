@@ -17,7 +17,14 @@ const dbConnect = async () => {
     cache.promise = mongoose.connect(uri, { bufferCommands: false });
   }
 
-  cache.conn = await cache.promise;
+  try {
+    cache.conn = await cache.promise;
+  } catch (error) {
+    // A rejected promise must not stay cached, otherwise every later request fails.
+    cache.promise = null;
+    throw error;
+  }
+
   return cache.conn;
 };
 

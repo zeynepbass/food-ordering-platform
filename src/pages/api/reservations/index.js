@@ -1,6 +1,8 @@
 import Reservation from "@/models/Reservation";
+import { reservationSchema } from "@/schemas/reservationSchema";
 import createHandler from "@/server/createHandler";
 import { requireAdmin } from "@/server/guards";
+import validate from "@/server/validate";
 
 export default createHandler({
   GET: async (req, res) => {
@@ -8,14 +10,7 @@ export default createHandler({
     res.status(200).json(await Reservation.find().sort({ date: 1 }));
   },
   POST: async (req, res) => {
-    const { fullName, phoneNumber, email, persons, date } = req.body;
-    const reservation = await Reservation.create({
-      fullName,
-      phoneNumber,
-      email,
-      persons,
-      date,
-    });
-    res.status(201).json(reservation);
+    const reservation = await validate(reservationSchema, req.body);
+    res.status(201).json(await Reservation.create(reservation));
   },
 });

@@ -1,13 +1,16 @@
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { FaUserAlt, FaShoppingCart, FaSearch } from "react-icons/fa";
-import { GiHamburgerMenu, GiCancel } from "react-icons/gi";
+import { FiMenu, FiSearch, FiShoppingBag, FiUser, FiX } from "react-icons/fi";
 import Logo from "@/components/common/Logo";
 import SearchModal from "@/components/layout/SearchModal";
 import { NAV_LINKS } from "@/constants/navigation";
 import useToggle from "@/hooks/useToggle";
 import { selectCartCount } from "@/redux/cartSlice";
+
+const iconButtonClass =
+  "relative grid h-10 w-10 place-content-center rounded-full transition-colors hover:bg-white/10 hover:text-primary";
 
 const Header = () => {
   const router = useRouter();
@@ -15,68 +18,92 @@ const Header = () => {
   const [isMenuOpen, menu] = useToggle(false);
   const [isSearchOpen, search] = useToggle(false);
 
+  useEffect(() => {
+    router.events.on("routeChangeStart", menu.close);
+    return () => router.events.off("routeChangeStart", menu.close);
+  }, [router.events, menu.close]);
+
+  const linkClass = (href) =>
+    `font-medium transition-colors hover:text-primary ${
+      router.pathname === href ? "text-primary" : "text-white/80"
+    }`;
+
   return (
-    <header
-      className={`h-[5.5rem] z-50 relative ${
-        router.pathname === "/" ? "bg-transparent" : "bg-secondary"
-      }`}
-    >
-      <div className="container mx-auto text-white flex justify-between items-center h-full">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-secondary text-white">
+      <div className="container flex h-[4.5rem] items-center justify-between gap-4">
         <Logo />
-        <nav
-          className={`sm:static absolute top-0 left-0 sm:w-auto sm:h-auto w-full h-screen sm:text-white text-black sm:bg-transparent bg-white sm:flex ${
-            isMenuOpen ? "grid place-content-center" : "hidden"
-          }`}
-        >
-          <ul className="flex gap-x-2 sm:flex-row flex-col items-center">
+        <nav aria-label="Main" className="hidden md:block">
+          <ul className="flex items-center gap-1">
             {NAV_LINKS.map(({ href, label }) => (
-              <li
-                key={href}
-                className="px-[5px] py-[10px] uppercase hover:text-primary"
-              >
-                <Link href={href} onClick={menu.close}>
+              <li key={href}>
+                <Link
+                  href={href}
+                  className={`rounded-full px-3.5 py-2 text-sm ${linkClass(href)}`}
+                  aria-current={router.pathname === href ? "page" : undefined}
+                >
                   {label}
                 </Link>
               </li>
             ))}
           </ul>
-          {isMenuOpen && (
-            <button
-              type="button"
-              aria-label="Close menu"
-              className="absolute top-4 right-4 z-50"
-              onClick={menu.close}
-            >
-              <GiCancel size={25} />
-            </button>
-          )}
         </nav>
-        <div className="flex gap-x-4 items-center">
-          <Link href="/auth/login" aria-label="Account">
-            <FaUserAlt className="hover:text-primary transition-all" />
-          </Link>
-          <Link href="/cart" aria-label="Cart" className="relative">
-            <FaShoppingCart className="hover:text-primary transition-all" />
-            <span className="w-4 h-4 text-xs grid place-content-center rounded-full bg-primary absolute -top-2 -right-3 text-black font-bold">
-              {cartCount}
-            </span>
-          </Link>
-          <button type="button" aria-label="Search" onClick={search.open}>
-            <FaSearch className="hover:text-primary transition-all" />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Search the menu"
+            className={iconButtonClass}
+            onClick={search.open}
+          >
+            <FiSearch size={19} aria-hidden="true" />
           </button>
-          <Link href="/menu" className="btn-primary md:inline-block hidden">
-            Order Online
+          <Link href="/auth/login" aria-label="Account" className={iconButtonClass}>
+            <FiUser size={19} aria-hidden="true" />
+          </Link>
+          <Link
+            href="/cart"
+            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
+            className={iconButtonClass}
+          >
+            <FiShoppingBag size={19} aria-hidden="true" />
+            {cartCount > 0 && (
+              <span className="absolute right-0.5 top-0.5 grid h-[18px] min-w-[18px] place-content-center rounded-full bg-primary px-1 text-[11px] font-bold text-secondary">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+          <Link href="/menu" className="btn btn-primary ml-2 hidden lg:inline-flex">
+            Order online
           </Link>
           <button
             type="button"
-            aria-label="Open menu"
-            className="sm:hidden inline-block"
-            onClick={menu.open}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-nav"
+            className={`${iconButtonClass} md:hidden`}
+            onClick={menu.toggle}
           >
-            <GiHamburgerMenu className="text-xl hover:text-primary transition-all" />
+            {isMenuOpen ? <FiX size={21} aria-hidden="true" /> : <FiMenu size={21} aria-hidden="true" />}
           </button>
         </div>
       </div>
+      {isMenuOpen && (
+        <nav id="mobile-nav" aria-label="Mobile" className="border-t border-white/10 md:hidden">
+          <ul className="container flex flex-col py-3">
+            {NAV_LINKS.map(({ href, label }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className={`block py-3 ${linkClass(href)}`}
+                  aria-current={router.pathname === href ? "page" : undefined}
+                  onClick={menu.close}
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
       {isSearchOpen && <SearchModal onClose={search.close} />}
     </header>
   );

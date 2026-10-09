@@ -28,7 +28,17 @@ export const getProductById = (id) => findById(Product, id);
 
 export const getOrderById = (id) => findById(Order, id);
 
-export const getUserById = (id) => findById(User, id);
+export const getUserById = async (id) => {
+  if (!mongoose.isValidObjectId(id)) {
+    return null;
+  }
+  await dbConnect();
+  const user = await User.findById(id).select("+password").lean();
+  if (!user) return null;
+
+  const { password, ...rest } = user;
+  return serialize({ ...rest, hasPassword: Boolean(password) });
+};
 
 export const getUserByEmail = async (email) => {
   await dbConnect();

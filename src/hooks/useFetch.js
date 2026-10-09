@@ -4,22 +4,31 @@ const useFetch = (fetcher, initialData = null) => {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const refetch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setData(await fetcher());
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetcher]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    refetch();
-  }, [refetch]);
+    // A superseded or unmounted request must not write its late response into state.
+    let active = true;
+
+    fetcher()
+      .then((result) => {
+        if (!active) return;
+        setData(result);
+        setError(null);
+      })
+      .catch((err) => active && setError(err))
+      .finally(() => active && setLoading(false));
+
+    return () => {
+      active = false;
+    };
+  }, [fetcher, reloadKey]);
+
+  const refetch = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setReloadKey((key) => key + 1);
+  }, []);
 
   return { data, setData, loading, error, refetch };
 };

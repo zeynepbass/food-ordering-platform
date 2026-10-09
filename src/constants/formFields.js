@@ -1,47 +1,64 @@
 export const loginFields = [
-  { name: "email", type: "email", placeholder: "Your Email Address" },
-  { name: "password", type: "password", placeholder: "Your Password" },
+  { name: "email", type: "email", label: "Email address", autoComplete: "email" },
+  { name: "password", type: "password", label: "Password", autoComplete: "current-password" },
 ];
 
 export const registerFields = [
-  { name: "fullName", type: "text", placeholder: "Your Full Name" },
-  { name: "email", type: "email", placeholder: "Your Email Address" },
-  { name: "password", type: "password", placeholder: "Your Password" },
-  { name: "confirmPassword", type: "password", placeholder: "Your Password Again" },
+  { name: "fullName", type: "text", label: "Full name", autoComplete: "name" },
+  { name: "email", type: "email", label: "Email address", autoComplete: "email" },
+  { name: "password", type: "password", label: "Password", autoComplete: "new-password" },
+  {
+    name: "confirmPassword",
+    type: "password",
+    label: "Confirm password",
+    autoComplete: "new-password",
+  },
 ];
 
 export const adminLoginFields = [
-  { name: "username", type: "text", placeholder: "Your Username" },
-  { name: "password", type: "password", placeholder: "Your Password" },
+  { name: "username", type: "text", label: "Username", autoComplete: "username" },
+  { name: "password", type: "password", label: "Password", autoComplete: "current-password" },
 ];
 
 export const reservationFields = [
-  { name: "fullName", type: "text", placeholder: "Your Full Name" },
-  { name: "phoneNumber", type: "tel", placeholder: "Your Phone Number" },
-  { name: "email", type: "email", placeholder: "Your Email Address" },
-  { name: "persons", type: "number", placeholder: "How Many Persons?" },
-  { name: "date", type: "datetime-local" },
+  { name: "fullName", type: "text", label: "Full name", autoComplete: "name" },
+  { name: "phoneNumber", type: "tel", label: "Phone number", autoComplete: "tel" },
+  { name: "email", type: "email", label: "Email address", autoComplete: "email" },
+  { name: "persons", type: "number", label: "Number of guests", min: 1, inputMode: "numeric" },
+  { name: "date", type: "datetime-local", label: "Date and time" },
 ];
 
 export const profileFields = [
-  { name: "fullName", type: "text", placeholder: "Your Full Name" },
-  { name: "phoneNumber", type: "tel", placeholder: "Your Phone Number" },
-  { name: "email", type: "email", placeholder: "Your Email Address", readOnly: true },
-  { name: "address", type: "text", placeholder: "Your Address" },
-  { name: "job", type: "text", placeholder: "Your Job" },
-  { name: "bio", type: "text", placeholder: "Your Bio" },
+  { name: "fullName", type: "text", label: "Full name", autoComplete: "name" },
+  { name: "phoneNumber", type: "tel", label: "Phone number", autoComplete: "tel" },
+  { name: "email", type: "email", label: "Email address", readOnly: true },
+  { name: "address", type: "text", label: "Delivery address", autoComplete: "street-address" },
+  { name: "job", type: "text", label: "Job" },
+  { name: "bio", type: "text", label: "Bio" },
 ];
 
+export const currentPasswordField = {
+  name: "currentPassword",
+  type: "password",
+  label: "Current password",
+  autoComplete: "current-password",
+};
+
 export const passwordFields = [
-  { name: "password", type: "password", placeholder: "Your Password" },
-  { name: "confirmPassword", type: "password", placeholder: "Your Confirm Password" },
+  { name: "password", type: "password", label: "New password", autoComplete: "new-password" },
+  {
+    name: "confirmPassword",
+    type: "password",
+    label: "Confirm new password",
+    autoComplete: "new-password",
+  },
 ];
 
 export const footerFields = [
-  { name: "location", type: "text", placeholder: "Your Location" },
-  { name: "email", type: "email", placeholder: "Your Email" },
-  { name: "phoneNumber", type: "tel", placeholder: "Your Phone Number" },
-  { name: "desc", type: "text", placeholder: "Your Description" },
-  { name: "day", type: "text", placeholder: "Opening Days" },
-  { name: "time", type: "text", placeholder: "Opening Hours" },
+  { name: "location", type: "text", label: "Address or map link" },
+  { name: "email", type: "email", label: "Contact email" },
+  { name: "phoneNumber", type: "tel", label: "Phone number" },
+  { name: "desc", type: "text", label: "Short description" },
+  { name: "day", type: "text", label: "Opening days", placeholder: "Monday - Sunday" },
+  { name: "time", type: "text", label: "Opening hours", placeholder: "10:00 - 23:00" },
 ];

@@ -1,67 +1,105 @@
 import { useState } from "react";
+import { FiGrid, FiPlus } from "react-icons/fi";
 import { toast } from "react-toastify";
-import Title from "@/components/common/Title";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import DataState from "@/components/common/DataState";
 import Input from "@/components/form/Input";
 import useFetch from "@/hooks/useFetch";
 import categoryService from "@/services/categoryService";
 
 const CategoryManager = () => {
-  const { data: categories, setData } = useFetch(categoryService.getAll, []);
+  const { data: categories, setData, loading, error, refetch } = useFetch(
+    categoryService.getAll,
+    []
+  );
   const [title, setTitle] = useState("");
+  const [isCreating, setCreating] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [isDeleting, setDeleting] = useState(false);
 
   const handleCreate = async (event) => {
     event.preventDefault();
     if (!title.trim()) return;
 
+    setCreating(true);
     try {
       const created = await categoryService.create(title.trim());
       setData((current) => [...current, created]);
       setTitle("");
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setCreating(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
-
+  const handleDelete = async () => {
+    setDeleting(true);
     try {
-      await categoryService.remove(id);
-      setData((current) => current.filter((category) => category._id !== id));
+      await categoryService.remove(pendingDelete._id);
+      setData((current) => current.filter((category) => category._id !== pendingDelete._id));
+      toast.success("Category deleted");
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setDeleting(false);
+      setPendingDelete(null);
     }
   };
 
   return (
-    <div className="lg:p-8 flex-1 lg:mt-0 mt-5">
-      <Title addClass="text-[40px]">Categories</Title>
-      <div className="mt-5">
-        <form className="flex gap-4 flex-1 items-center" onSubmit={handleCreate}>
-          <Input
-            placeholder="Add a new Category..."
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-          />
-          <button className="btn-primary" type="submit">
-            Add
-          </button>
-        </form>
-        <div className="mt-10 max-h-[250px] overflow-auto pb-4">
-          {categories.map((category) => (
-            <div className="flex justify-between mt-4" key={category._id}>
-              <b className="text-xl">{category.title}</b>
-              <button
-                type="button"
-                className="btn-primary !bg-danger"
-                onClick={() => handleDelete(category._id)}
-              >
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
+    <div className="flex max-w-2xl flex-col gap-4">
+      <form className="card flex items-end gap-3 p-5" onSubmit={handleCreate}>
+        <Input
+          label="New category"
+          placeholder="e.g. Pizza"
+          maxLength={60}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+        <button className="btn btn-primary" type="submit" disabled={isCreating || !title.trim()}>
+          <FiPlus aria-hidden="true" /> Add
+        </button>
+      </form>
+      <div className="card overflow-hidden">
+        <DataState
+          loading={loading}
+          error={error}
+          onRetry={refetch}
+          isEmpty={categories.length === 0}
+          empty={{
+            icon: FiGrid,
+            title: "No categories yet",
+            text: "Categories group the products shown on the menu.",
+          }}
+        >
+          <ul className="divide-y divide-line">
+            {categories.map((category) => (
+              <li key={category._id} className="flex items-center justify-between gap-4 px-5 py-3">
+                <span className="font-semibold text-secondary">{category.title}</span>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={() => setPendingDelete(category)}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </DataState>
       </div>
+      {pendingDelete && (
+        <ConfirmDialog
+          danger
+          title="Delete category?"
+          message={`"${pendingDelete.title}" will be removed. Categories that still contain products cannot be deleted.`}
+          confirmLabel="Delete"
+          loading={isDeleting}
+          onConfirm={handleDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
     </div>
   );
 };

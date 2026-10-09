@@ -1,24 +1,31 @@
-const Input = ({ type = "text", errorMessage, touched, placeholder, ...inputProps }) => {
-  const hasError = touched && errorMessage;
+import { useId } from "react";
+
+const Input = ({ label, type = "text", errorMessage, touched, className = "", id, ...inputProps }) => {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
+  const hasError = Boolean(touched && errorMessage);
 
   return (
-    <div className="w-full">
-      <label className="relative block cursor-text w-full">
-        <input
-          type={type}
-          className={`h-14 w-full border outline-none px-4 peer ${
-            type !== "datetime-local" ? "pt-2" : ""
-          } ${hasError ? "border-red-500" : "border-primary"}`}
-          required
-          {...inputProps}
-        />
-        {type !== "datetime-local" && (
-          <span className="absolute top-0 left-0 px-4 text-sm flex items-center h-full peer-focus:h-7 peer-focus:text-xs peer-valid:h-7 peer-valid:text-xs transition-all">
-            {placeholder}
-          </span>
-        )}
-      </label>
-      {hasError && <span className="text-xs text-danger">{errorMessage}</span>}
+    <div className={`w-full ${className}`}>
+      {label && (
+        <label htmlFor={inputId} className="field-label">
+          {label}
+        </label>
+      )}
+      <input
+        id={inputId}
+        type={type}
+        className={`field-input ${hasError ? "field-input-error" : ""}`}
+        aria-invalid={hasError}
+        aria-describedby={hasError ? errorId : undefined}
+        {...inputProps}
+      />
+      {hasError && (
+        <p id={errorId} className="field-error">
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 };

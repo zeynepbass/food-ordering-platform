@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 const useToggle = (initialValue = false) => {
   const [value, setValue] = useState(initialValue);
@@ -12,9 +12,7 @@ const useToggle = (initialValue = false) => {
     []
   );
 
-  const set = useCallback((next) => setValue(next), []);
-
-  return [value, { ...actions, set }];
+  return [value, actions];
 };
 
 export default useToggle;

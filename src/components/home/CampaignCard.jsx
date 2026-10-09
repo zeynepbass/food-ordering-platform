@@ -1,29 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MdShoppingCart } from "react-icons/md";
-import Title from "@/components/common/Title";
+import { FiArrowRight } from "react-icons/fi";
 
 const CampaignCard = ({ campaign }) => (
-  <div className="bg-secondary flex-1 rounded-md py-5 px-[15px] flex items-center gap-x-4">
-    <div className="relative md:w-44 md:h-44 w-36 h-36 border-[5px] border-primary rounded-full overflow-hidden">
+  <article className="flex items-center gap-5 rounded-3xl bg-secondary p-5 text-white sm:gap-6 sm:p-6">
+    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl ring-4 ring-primary/80 sm:h-32 sm:w-32">
       <Image
         src={campaign.image}
-        alt={campaign.title}
+        alt=""
         fill
-        className="object-cover hover:scale-105 transition-all"
+        sizes="128px"
+        className="object-cover"
       />
     </div>
-    <div className="text-white">
-      <Title addClass="text-2xl">{campaign.title}</Title>
-      <div className="font-dancing my-1">
-        <span className="text-[40px]">{campaign.discount}%</span>
-        <span className="text-sm inline-block ml-1">Off</span>
-      </div>
-      <Link href="/menu" className="btn-primary flex items-center gap-x-2">
-        Order Now <MdShoppingCart size={20} />
+    <div>
+      <h3 className="font-display text-xl font-semibold sm:text-2xl">{campaign.title}</h3>
+      <p className="mt-1 text-white/70">
+        <span className="text-3xl font-bold text-primary">{campaign.discount}%</span> off
+      </p>
+      <Link href="/menu" className="btn btn-sm btn-primary mt-3">
+        Order now <FiArrowRight aria-hidden="true" />
       </Link>
     </div>
-  </div>
+  </article>
 );
 
 export default CampaignCard;
