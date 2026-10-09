@@ -3,10 +3,13 @@ import MenuWrapper from "@/components/product/MenuWrapper";
 import { getCategories, getProducts } from "@/server/queries";
 
 const MenuPage = ({ categories, products }) => (
-  <div className="pt-10">
-    <Seo title="Menu" />
-    <MenuWrapper categories={categories} products={products} />
-  </div>
+  <>
+    <Seo
+      title="Menu"
+      description="Browse the menu by category and order pizzas, burgers and drinks online."
+    />
+    <MenuWrapper categories={categories} products={products} headingAs="h1" />
+  </>
 );
 
 export const getServerSideProps = async () => {

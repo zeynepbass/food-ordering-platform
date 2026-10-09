@@ -1,4 +1,5 @@
 import Category from "@/models/Category";
+import Product from "@/models/Product";
 import createHandler from "@/server/createHandler";
 import HttpError from "@/server/HttpError";
 import { requireAdmin } from "@/server/guards";
@@ -11,8 +12,16 @@ export default createHandler({
   },
   DELETE: async (req, res) => {
     requireAdmin(req);
-    const category = await Category.findByIdAndDelete(req.query.id);
+    const category = await Category.findById(req.query.id);
     if (!category) throw new HttpError(404, "Category not found");
+
+    // Products reference their category by title, so removing it would hide them from the menu.
+    const inUse = await Product.exists({ category: category.title.toLowerCase() });
+    if (inUse) {
+      throw new HttpError(409, "Delete the products in this category first");
+    }
+
+    await category.deleteOne();
     res.status(200).json(category);
   },
 });

@@ -1,14 +1,14 @@
 import User from "@/models/User";
 import createHandler from "@/server/createHandler";
 import HttpError from "@/server/HttpError";
-import { requireSession } from "@/server/guards";
+import { requireSessionEmail } from "@/server/guards";
 
 export default createHandler({
   GET: async (req, res) => {
-    const session = await requireSession(req, res);
+    const sessionEmail = await requireSessionEmail(req, res);
     const email = String(req.query.email || "").toLowerCase();
 
-    if (!email || email !== session.user.email.toLowerCase()) {
+    if (email !== sessionEmail) {
       throw new HttpError(403, "Forbidden");
     }
 

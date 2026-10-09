@@ -1,5 +1,7 @@
-const Title = ({ children, addClass = "" }) => (
-  <div className={`${addClass} font-dancing font-bold`}>{children}</div>
+const Title = ({ as: Tag = "h2", className = "section-title", children, ...props }) => (
+  <Tag className={className} {...props}>
+    {children}
+  </Tag>
 );
 
 export default Title;

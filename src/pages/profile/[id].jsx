@@ -1,50 +1,43 @@
 import { useState } from "react";
-import { getServerSession } from "next-auth/next";
 import { signOut } from "next-auth/react";
+import { FiKey, FiPackage, FiUser } from "react-icons/fi";
 import Seo from "@/components/common/Seo";
-import DashboardLayout from "@/components/common/DashboardLayout";
 import AccountSettings from "@/components/profile/AccountSettings";
 import PasswordSettings from "@/components/profile/PasswordSettings";
+import ProfileLayout from "@/components/profile/ProfileLayout";
 import UserOrders from "@/components/profile/UserOrders";
-import { authOptions } from "@/server/auth";
+import { getSessionEmail } from "@/server/guards";
 import { getUserById } from "@/server/queries";
 
 const PROFILE_TABS = [
-  { key: "account", label: "Account", icon: "fa fa-home", Component: AccountSettings },
-  { key: "password", label: "Password", icon: "fa fa-key", Component: PasswordSettings },
-  { key: "orders", label: "Orders", icon: "fa fa-motorcycle", Component: UserOrders },
+  { key: "account", label: "Account", Icon: FiUser, Component: AccountSettings },
+  { key: "password", label: "Password", Icon: FiKey, Component: PasswordSettings },
+  { key: "orders", label: "Orders", Icon: FiPackage, Component: UserOrders },
 ];
 
 const ProfilePage = ({ user }) => {
   const [activeTab, setActiveTab] = useState(PROFILE_TABS[0].key);
   const { Component } = PROFILE_TABS.find((tab) => tab.key === activeTab);
 
-  const handleExit = () => {
-    if (confirm("Are you sure you want to sign out?")) {
-      signOut({ callbackUrl: "/auth/login" });
-    }
-  };
-
   return (
-    <DashboardLayout
-      avatarSrc={user.image || "/images/client2.jpg"}
-      name={user.fullName}
+    <ProfileLayout
+      user={user}
       tabs={PROFILE_TABS}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      onExit={handleExit}
+      onSignOut={() => signOut({ callbackUrl: "/auth/login" })}
     >
-      <Seo title="Profile" />
+      <Seo title="Profile" noindex />
       <Component user={user} />
-    </DashboardLayout>
+    </ProfileLayout>
   );
 };
 
 export const getServerSideProps = async ({ req, res, params }) => {
-  const session = await getServerSession(req, res, authOptions);
-  const user = await getUserById(params.id);
+  const email = await getSessionEmail(req, res);
+  const user = email ? await getUserById(params.id) : null;
 
-  if (!session || !user || user.email !== session.user.email.toLowerCase()) {
+  if (!user || user.email !== email) {
     return { redirect: { destination: "/auth/login", permanent: false } };
   }
   return { props: { user } };

@@ -1,32 +1,47 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { FiX } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Modal from "@/components/common/Modal";
+import Input from "@/components/form/Input";
 import { MULTI_SIZE_CATEGORY, SIZES } from "@/constants/product";
 import useFetch from "@/hooks/useFetch";
 import categoryService from "@/services/categoryService";
 import imageService from "@/services/imageService";
 import productService from "@/services/productService";
-
-const fieldClass = "border-2 p-1 text-sm px-1 outline-none";
-const priceClass = "border-b-2 p-1 pl-0 text-sm px-1 outline-none w-36";
+import { formatPrice } from "@/utils/format";
 
 const initialForm = { title: "", desc: "", category: "", prices: [] };
 const emptyExtra = { text: "", price: "" };
 
 const AddProductModal = ({ onClose, onCreated }) => {
-  const { data: categories } = useFetch(categoryService.getAll, []);
+  const { data: categories, loading } = useFetch(categoryService.getAll, []);
   const [form, setForm] = useState(initialForm);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
+  const previewUrl = useRef("");
   const [extra, setExtra] = useState(emptyExtra);
   const [extraOptions, setExtraOptions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   const category = form.category || categories[0]?.title.toLowerCase() || "";
   const sizeCount = category === MULTI_SIZE_CATEGORY ? SIZES.length : 1;
+  const hasCategories = categories.length > 0;
 
-  const priceInputs = useMemo(() => SIZES.slice(0, sizeCount), [sizeCount]);
+  const releasePreview = () => {
+    if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
+  };
+
+  useEffect(() => releasePreview, []);
+
+  const handleFile = (event) => {
+    const selected = event.target.files[0] ?? null;
+
+    releasePreview();
+    previewUrl.current = selected ? URL.createObjectURL(selected) : "";
+    setFile(selected);
+    setPreview(previewUrl.current);
+  };
 
   const handleField = (event) => {
     const { name, value } = event.target;
@@ -41,24 +56,23 @@ const AddProductModal = ({ onClose, onCreated }) => {
     });
   };
 
-  const handleFile = (event) => {
-    const selected = event.target.files[0];
-    if (!selected) return;
-    setFile(selected);
-    setPreview(URL.createObjectURL(selected));
-  };
-
   const handleAddExtra = () => {
-    if (!extra.text || !extra.price) return;
-    setExtraOptions((current) => [...current, { text: extra.text, price: Number(extra.price) }]);
+    const text = extra.text.trim();
+    if (!text || extra.price === "" || Number(extra.price) < 0) {
+      toast.error("Enter a name and a price for the extra.");
+      return;
+    }
+    setExtraOptions((current) => [...current, { text, price: Number(extra.price) }]);
     setExtra(emptyExtra);
   };
 
-  const handleCreate = async () => {
-    const prices = form.prices.slice(0, sizeCount).map(Number);
-    const hasAllPrices = prices.length === sizeCount && prices.every((price) => price > 0);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    if (!file || !form.title || !form.desc || !category || !hasAllPrices) {
+    const prices = Array.from({ length: sizeCount }, (_, index) => Number(form.prices[index]));
+    const hasAllPrices = prices.every((price) => price > 0);
+
+    if (!file || !form.title.trim() || !form.desc.trim() || !category || !hasAllPrices) {
       toast.error("Please fill in all required fields.");
       return;
     }
@@ -66,7 +80,7 @@ const AddProductModal = ({ onClose, onCreated }) => {
     setSubmitting(true);
     try {
       const img = await imageService.upload(file);
-      await productService.create({
+      const product = await productService.create({
         img,
         title: form.title,
         desc: form.desc,
@@ -74,8 +88,8 @@ const AddProductModal = ({ onClose, onCreated }) => {
         prices,
         extraOptions,
       });
-      toast.success("Product created successfully!");
-      onCreated();
+      toast.success("Product created");
+      onCreated(product);
     } catch (err) {
       toast.error(err.message);
       setSubmitting(false);
@@ -83,118 +97,147 @@ const AddProductModal = ({ onClose, onCreated }) => {
   };
 
   return (
-    <Modal title="Add a New Product" onClose={onClose}>
-      <div className="flex flex-col text-sm mt-6">
-        <label className="flex gap-2 items-center cursor-pointer">
-          <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
-          <span className="btn-primary !rounded-none !bg-blue-600">Choose an Image</span>
-          {preview && (
-            <Image
-              src={preview}
-              alt="Preview"
-              width={48}
-              height={48}
-              unoptimized
-              className="w-12 h-12 rounded-full object-cover"
+    <Modal title="Add a product" onClose={onClose}>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        <div>
+          <label htmlFor="product-image" className="field-label">
+            Image
+          </label>
+          <div className="flex items-center gap-4">
+            {preview && (
+              <Image
+                src={preview}
+                alt="Selected image preview"
+                width={56}
+                height={56}
+                unoptimized
+                className="h-14 w-14 rounded-xl bg-primary-50 object-contain"
+              />
+            )}
+            <input
+              id="product-image"
+              type="file"
+              accept="image/*"
+              className="block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-secondary-600"
+              onChange={handleFile}
             />
-          )}
-        </label>
-      </div>
-      <div className="flex flex-col text-sm mt-4">
-        <span className="font-semibold mb-[2px]">Title</span>
-        <input
-          type="text"
+          </div>
+        </div>
+        <Input
+          label="Title"
           name="title"
-          className={fieldClass}
-          placeholder="Write a title..."
+          maxLength={60}
           value={form.title}
           onChange={handleField}
         />
-      </div>
-      <div className="flex flex-col text-sm mt-4">
-        <span className="font-semibold mb-[2px]">Description</span>
-        <textarea
-          name="desc"
-          className={fieldClass}
-          placeholder="Write a description..."
-          value={form.desc}
-          onChange={handleField}
-        />
-      </div>
-      <div className="flex flex-col text-sm mt-4">
-        <span className="font-semibold mb-[2px]">Select Category</span>
-        <select name="category" className={fieldClass} value={category} onChange={handleField}>
-          {categories.map((item) => (
-            <option key={item._id} value={item.title.toLowerCase()}>
-              {item.title}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col text-sm mt-4 w-full">
-        <span className="font-semibold mb-[2px]">Prices</span>
-        <div className="flex justify-between gap-6 w-full md:flex-nowrap flex-wrap">
-          {priceInputs.map((size, index) => (
-            <input
-              key={size.label}
+        <div>
+          <label htmlFor="product-desc" className="field-label">
+            Description
+          </label>
+          <textarea
+            id="product-desc"
+            name="desc"
+            rows={3}
+            maxLength={300}
+            className="field-input"
+            value={form.desc}
+            onChange={handleField}
+          />
+        </div>
+        <div>
+          <label htmlFor="product-category" className="field-label">
+            Category
+          </label>
+          <select
+            id="product-category"
+            name="category"
+            className="field-input"
+            value={category}
+            onChange={handleField}
+            disabled={!hasCategories}
+          >
+            {categories.map((item) => (
+              <option key={item._id} value={item.title.toLowerCase()}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+          {!loading && !hasCategories && (
+            <p className="field-error">Create a category first in the Categories section.</p>
+          )}
+        </div>
+        <fieldset>
+          <legend className="field-label">{sizeCount > 1 ? "Prices by size" : "Price"}</legend>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {SIZES.slice(0, sizeCount).map((size, index) => (
+              <Input
+                key={size}
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                aria-label={sizeCount > 1 ? `${size} price` : "Price"}
+                placeholder={sizeCount > 1 ? size : "0.00"}
+                value={form.prices[index] ?? ""}
+                onChange={(event) => handlePrice(index, event.target.value)}
+              />
+            ))}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend className="field-label">Extras (optional)</legend>
+          <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
+            <Input
+              aria-label="Extra name"
+              placeholder="e.g. Extra cheese"
+              maxLength={40}
+              value={extra.text}
+              onChange={(event) => setExtra({ ...extra, text: event.target.value })}
+            />
+            <Input
               type="number"
               min="0"
-              className={priceClass}
-              placeholder={sizeCount > 1 ? size.label.toLowerCase() : "price"}
-              value={form.prices[index] ?? ""}
-              onChange={(event) => handlePrice(index, event.target.value)}
+              step="0.01"
+              inputMode="decimal"
+              aria-label="Extra price"
+              placeholder="0.00"
+              className="sm:max-w-[8rem]"
+              value={extra.price}
+              onChange={(event) => setExtra({ ...extra, price: event.target.value })}
             />
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col text-sm mt-4 w-full">
-        <span className="font-semibold mb-[2px]">Extra</span>
-        <div className="flex gap-6 w-full md:flex-nowrap flex-wrap">
-          <input
-            type="text"
-            className={priceClass}
-            placeholder="item"
-            value={extra.text}
-            onChange={(event) => setExtra({ ...extra, text: event.target.value })}
-          />
-          <input
-            type="number"
-            min="0"
-            className={priceClass}
-            placeholder="price"
-            value={extra.price}
-            onChange={(event) => setExtra({ ...extra, price: event.target.value })}
-          />
-          <button type="button" className="btn-primary ml-auto" onClick={handleAddExtra}>
-            Add
+            <button type="button" className="btn btn-outline" onClick={handleAddExtra}>
+              Add
+            </button>
+          </div>
+          {extraOptions.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {extraOptions.map((item, index) => (
+                <li key={`${item.text}-${index}`} className="badge badge-neutral">
+                  {item.text} · {formatPrice(item.price)}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${item.text}`}
+                    className="rounded-full hover:text-danger"
+                    onClick={() =>
+                      setExtraOptions((current) => current.filter((_, i) => i !== index))
+                    }
+                  >
+                    <FiX aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </fieldset>
+        <div className="mt-2 flex justify-end gap-3">
+          <button type="button" className="btn btn-outline" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={submitting || !hasCategories}>
+            {submitting ? "Creating..." : "Create product"}
           </button>
         </div>
-        <div className="mt-2 flex gap-2 flex-wrap">
-          {extraOptions.map((item, index) => (
-            <button
-              key={`${item.text}-${index}`}
-              type="button"
-              title="Remove"
-              className="inline-block border border-orange-500 text-orange-500 p-1 rounded-xl text-xs"
-              onClick={() =>
-                setExtraOptions((current) => current.filter((_, i) => i !== index))
-              }
-            >
-              {item.text}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="flex justify-end mt-4">
-        <button
-          type="button"
-          className="btn-primary !bg-success"
-          onClick={handleCreate}
-          disabled={submitting}
-        >
-          Create
-        </button>
-      </div>
+      </form>
     </Modal>
   );
 };

@@ -1,62 +1,99 @@
 import Image from "next/image";
+import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
+import { FiCheck, FiShoppingBag } from "react-icons/fi";
 import { toast } from "react-toastify";
-import Title from "@/components/common/Title";
 import SizeSelector from "@/components/product/SizeSelector";
 import useProductOptions from "@/hooks/useProductOptions";
 import { addProduct, selectCartProducts } from "@/redux/cartSlice";
+import { formatPrice } from "@/utils/format";
 
 const ProductDetail = ({ product }) => {
   const dispatch = useDispatch();
   const cartProducts = useSelector(selectCartProducts);
-  const { sizeIndex, setSizeIndex, price, toggleExtra, cartItem } =
+  const { sizeIndex, setSizeIndex, extras, price, toggleExtra, cartItem } =
     useProductOptions(product);
 
   const isInCart = cartProducts.some((item) => item.productId === product._id);
 
   const handleAddToCart = () => {
     dispatch(addProduct(cartItem));
-    toast.success("Added to cart", { autoClose: 1000 });
+    toast.success("Added to cart");
   };
 
   return (
-    <div className="container mx-auto flex items-center md:min-h-[calc(100vh_-_88px)] gap-5 py-20 flex-wrap">
-      <div className="relative md:flex-1 md:w-[80%] md:h-[80%] w-36 h-36 mx-auto min-h-[300px]">
-        <Image src={product.img} alt={product.title} fill priority className="object-contain" />
+    <div className="container grid items-center gap-10 py-10 md:grid-cols-2 md:py-16 lg:gap-16">
+      <div className="relative aspect-square w-full rounded-3xl bg-primary-50">
+        <Image
+          src={product.img}
+          alt={product.title}
+          fill
+          priority
+          sizes="(min-width: 768px) 50vw, 100vw"
+          className="object-contain p-10 sm:p-16"
+        />
       </div>
-      <div className="md:flex-1 md:text-start text-center">
-        <Title addClass="text-6xl">{product.title}</Title>
-        <span className="text-primary text-2xl font-bold underline underline-offset-1 my-4 inline-block">
-          ${price}
-        </span>
-        <p className="text-sm my-4 md:pr-24">{product.desc}</p>
+      <div>
+        <span className="badge badge-neutral capitalize">{product.category}</span>
+        <h1 className="page-title mt-3">{product.title}</h1>
+        <p className="mt-3 text-2xl font-semibold text-secondary" aria-live="polite">
+          {formatPrice(price)}
+        </p>
+        <p className="mt-4 text-muted">{product.desc}</p>
         {product.prices.length > 1 && (
-          <SizeSelector
-            sizeCount={product.prices.length}
-            selectedIndex={sizeIndex}
-            onSelect={setSizeIndex}
-          />
+          <div className="mt-8">
+            <SizeSelector
+              prices={product.prices}
+              selectedIndex={sizeIndex}
+              onSelect={setSizeIndex}
+            />
+          </div>
         )}
-        <div className="flex gap-x-4 my-6 md:justify-start justify-center flex-wrap">
-          {product.extraOptions.map((extra) => (
-            <label key={extra._id} className="flex items-center gap-x-1">
-              <input
-                type="checkbox"
-                className="w-5 h-5 accent-primary"
-                onChange={(event) => toggleExtra(extra, event.target.checked)}
-              />
-              <span className="text-sm font-semibold">{extra.text}</span>
-            </label>
-          ))}
+        {product.extraOptions.length > 0 && (
+          <fieldset className="mt-8">
+            <legend className="field-label">Add extras</legend>
+            <div className="flex flex-wrap gap-2">
+              {product.extraOptions.map((extra) => (
+                <label
+                  key={extra._id}
+                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm transition-colors hover:border-primary/60 has-[:checked]:border-primary has-[:checked]:bg-primary-50"
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary"
+                    checked={extras.some((item) => item._id === extra._id)}
+                    onChange={(event) => toggleExtra(extra, event.target.checked)}
+                  />
+                  <span className="font-medium text-secondary">{extra.text}</span>
+                  <span className="text-xs text-muted">+{formatPrice(extra.price)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="btn btn-lg btn-primary"
+            onClick={handleAddToCart}
+            disabled={isInCart}
+          >
+            {isInCart ? (
+              <>
+                <FiCheck aria-hidden="true" /> In your cart
+              </>
+            ) : (
+              <>
+                <FiShoppingBag aria-hidden="true" /> Add to cart
+              </>
+            )}
+          </button>
+          {isInCart && (
+            <Link href="/cart" className="btn btn-lg btn-outline">
+              View cart
+            </Link>
+          )}
         </div>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleAddToCart}
-          disabled={isInCart}
-        >
-          {isInCart ? "In Cart" : "Add to Cart"}
-        </button>
       </div>
     </div>
   );

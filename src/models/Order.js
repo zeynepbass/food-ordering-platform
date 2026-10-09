@@ -18,6 +18,20 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       maxlength: 200,
     },
+    items: {
+      type: [
+        {
+          _id: false,
+          productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+          title: { type: String, required: true },
+          size: { type: String },
+          extras: { type: [String], default: [] },
+          price: { type: Number, required: true, min: 0 },
+          quantity: { type: Number, required: true, min: 1 },
+        },
+      ],
+      default: [],
+    },
     total: {
       type: Number,
       required: true,

@@ -1,13 +1,18 @@
 import axios from "axios";
+import apiClient from "@/services/apiClient";
 
 const imageService = {
   upload: async (file) => {
+    const { cloudName, fields } = await apiClient
+      .post("/uploads/signature")
+      .then((res) => res.data);
+
     const data = new FormData();
     data.append("file", file);
-    data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+    Object.entries(fields).forEach(([name, value]) => data.append(name, value));
 
     const res = await axios.post(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
       data
     );
     return res.data.secure_url;

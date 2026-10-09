@@ -3,8 +3,8 @@ import AboutSection from "@/components/home/AboutSection";
 
 const AboutPage = () => (
   <>
-    <Seo title="About" />
-    <AboutSection />
+    <Seo title="About" description="Our story and how we prepare every order." />
+    <AboutSection headingAs="h1" />
   </>
 );
 

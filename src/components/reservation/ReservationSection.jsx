@@ -15,13 +15,17 @@ const initialValues = {
   date: "",
 };
 
-const ReservationSection = () => {
+const ReservationSection = ({ headingAs = "h2" }) => {
   const formik = useFormik({
     initialValues,
     validationSchema: reservationSchema,
     onSubmit: async (values, actions) => {
       try {
-        await reservationService.create(values);
+        // datetime-local has no timezone; send an absolute instant so the server stores the right time.
+        await reservationService.create({
+          ...values,
+          date: new Date(values.date).toISOString(),
+        });
         toast.success("Your table has been booked!");
         actions.resetForm();
       } catch (err) {
@@ -31,25 +35,30 @@ const ReservationSection = () => {
   });
 
   return (
-    <section className="container mx-auto py-12">
-      <Title addClass="text-[40px] mb-10">Book A Table</Title>
-      <div className="flex justify-between flex-wrap-reverse gap-10">
-        <form className="lg:flex-1 w-full" onSubmit={formik.handleSubmit}>
-          <div className="flex flex-col gap-y-3">
-            <FormFields fields={reservationFields} formik={formik} />
-          </div>
-          <button className="btn-primary mt-4" type="submit" disabled={formik.isSubmitting}>
-            BOOK NOW
+    <section className="container py-16">
+      <p className="eyebrow">Reservation</p>
+      <Title as={headingAs} className="section-title mt-3">
+        Book a table
+      </Title>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <form className="card flex flex-col gap-4 p-6 sm:p-8" onSubmit={formik.handleSubmit} noValidate>
+          <FormFields fields={reservationFields} formik={formik} />
+          <button
+            className="btn btn-primary mt-2 self-start"
+            type="submit"
+            disabled={formik.isSubmitting}
+          >
+            {formik.isSubmitting ? "Booking..." : "Book now"}
           </button>
         </form>
-        <div className="lg:flex-1 w-full min-h-[300px]">
+        <div className="card min-h-[320px] overflow-hidden">
           <iframe
             title="Restaurant location"
             src={MAP_EMBED_URL}
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            className="h-full w-full"
+            className="h-full min-h-[320px] w-full"
           ></iframe>
         </div>
       </div>
